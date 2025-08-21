@@ -34,12 +34,29 @@ This will:
 - Install to `%USERPROFILE%\.local\bin\`
 - Add the installation directory to your PATH
 - Verify Windows Terminal is available
+- Create global `cs` command accessible from anywhere
 
 #### Manual Installation
 
 1. Download the latest `cs.exe` from [Releases](https://github.com/soh963/claude-squad-windows/releases)
-2. Place it in a directory in your PATH
-3. Ensure Windows Terminal is installed (available from Microsoft Store)
+2. Place it in `%USERPROFILE%\.local\bin\` (or any directory in your PATH)
+3. Add the directory to your PATH environment variable:
+   ```powershell
+   # Add to PATH permanently (requires restart or new terminal)
+   $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
+   [Environment]::SetEnvironmentVariable('PATH', "$userPath;$env:USERPROFILE\.local\bin", 'User')
+   ```
+4. Ensure Windows Terminal is installed (available from Microsoft Store)
+
+#### Verification
+
+After installation, verify that `cs` is globally accessible:
+
+```powershell
+# Test from any directory
+cs version
+# Should output: claude-squad version 1.0.12
+```
 
 ### Prerequisites
 
@@ -48,6 +65,20 @@ This will:
 - [Git](https://git-scm.com/) for version control
 
 ### Usage
+
+#### Basic Usage
+
+Claude Squad Windows is now globally accessible! Simply navigate to any git repository and run:
+
+```powershell
+# Navigate to your project
+cd C:\your-project
+
+# Start Claude Squad Windows
+cs
+```
+
+#### Command Line Options
 
 ```
 Usage:
@@ -62,27 +93,65 @@ Available Commands:
   version     Print the version number of claude-squad
 
 Flags:
-  -y, --autoyes          [experimental] If enabled, all instances will automatically accept prompts for claude code & aider
+  -y, --autoyes          [experimental] If enabled, all instances will automatically accept prompts
   -h, --help             help for claude-squad
   -p, --program string   Program to run in new instances (e.g. 'aider --model ollama_chat/gemma3:1b')
 ```
 
-Run the application with:
+#### Windows Environment Setup
 
-```bash
-cs
+**Default Configuration Location:**
+```powershell
+# View current config
+cs debug
+
+# Config file location: %USERPROFILE%\.claude-squad\config.json
+# Example: C:\Users\YourName\.claude-squad\config.json
 ```
-NOTE: The default program is `claude` and we recommend using the latest version.
 
-<br />
+**Environment Variables for AI Assistants:**
+```powershell
+# For Claude Code (default)
+# No additional setup required if using Claude Code CLI
 
-<b>Using Claude Squad with other AI assistants:</b>
-- For [Codex](https://github.com/openai/codex): Set your API key with `export OPENAI_API_KEY=<your_key>`
-- Launch with specific assistants:
-   - Codex: `cs -p "codex"`
-   - Aider: `cs -p "aider ..."`
-   - Gemini: `cs -p "gemini"`
-- Make this the default, by modifying the config file (locate with `cs debug`)
+# For OpenAI Codex
+$env:OPENAI_API_KEY = "your-openai-api-key"
+
+# For local models (Ollama)
+# Ensure Ollama is installed and running: ollama serve
+```
+
+#### Launching with Specific AI Assistants
+
+```powershell
+# Claude Code (default)
+cs
+
+# Aider with OpenAI
+cs -p "aider --model gpt-4"
+
+# Aider with local Ollama model
+cs -p "aider --model ollama_chat/codellama:13b"
+
+# Custom program
+cs -p "your-ai-assistant"
+```
+
+#### Making Settings Permanent
+
+Edit the configuration file to set your preferred default:
+
+```powershell
+# Find config location
+cs debug
+
+# Edit config file (example content):
+# {
+#   "default_program": "aider --model gpt-4",
+#   "auto_yes": false,
+#   "daemon_poll_interval": 1000
+# }
+```
 
 <br />
 
@@ -112,14 +181,25 @@ The menu at the bottom of the screen shows available commands:
 
 #### Failed to start new session
 
-If you get an error like `failed to start new session: timed out waiting for tmux session`, update the
-underlying program (ex. `claude`) to the latest version.
+If you get an error like `failed to start new session`, try the following:
+1. Ensure Windows Terminal is installed and accessible
+2. Update the underlying program (ex. `claude`) to the latest version
+3. Check if the program path is correct: `cs debug`
+4. Verify git repository: claude-squad must be run from within a git repository
+
+#### Windows Terminal not found
+
+If you get an error about Windows Terminal:
+1. Install Windows Terminal from [Microsoft Store](https://apps.microsoft.com/store/detail/windows-terminal/9N0DX20HK701)
+2. Or install via winget: `winget install Microsoft.WindowsTerminal`
+3. Ensure `wt.exe` is in your PATH
 
 ### How It Works
 
-1. **tmux** to create isolated terminal sessions for each agent
-2. **git worktrees** to isolate codebases so each session works on its own branch
+1. **Windows Terminal** to create isolated terminal sessions for each agent (replaces tmux)
+2. **git worktrees** to isolate codebases so each session works on its own branch  
 3. A simple TUI interface for easy navigation and management
+4. **Windows-native** implementation with full feature parity
 
 ### License
 
